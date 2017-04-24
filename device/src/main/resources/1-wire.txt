@@ -1,0 +1,14 @@
+server: rp1
+adress: 12.996AB6000000
+type: magnet
+connected: sensed.A == 0
+
+server: rp1
+adress: 12.597321000000
+type: motion sensor
+connected: sensed.A == 1
+
+server: rp1
+adress: 12.CA6DB6000000
+type: IR break beam
+connected: sensed.A == 1
