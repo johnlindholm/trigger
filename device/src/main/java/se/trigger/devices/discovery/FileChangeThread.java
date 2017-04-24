@@ -24,8 +24,8 @@ public class FileChangeThread implements Runnable {
 
     @Override
     public void run() {
-        System.out.println(folder);
-        System.out.println(filename);
+        System.out.println("FileChangeThread.run() folder: " + folder);
+        System.out.println("FileChangeThread.run() filename: " + filename);
         try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
             folder.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
             while (true) {
@@ -33,7 +33,6 @@ public class FileChangeThread implements Runnable {
                 for (WatchEvent<?> event : wk.pollEvents()) {
                     //we only register "ENTRY_MODIFY" so the context is always a Path.
                     final Path changed = (Path) event.context();
-                    System.out.println(changed);
                     if (changed.endsWith(filename)) {
                         listener.onChange(changed);
                         System.out.println("My file has changed");

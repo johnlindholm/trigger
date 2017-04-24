@@ -3,6 +3,7 @@ package se.trigger.onewire;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -74,14 +75,17 @@ public class OneWireComponent {
     @Value("${address}")
     private String address;
 
-    private final Path deviceFolder;
+    private Path deviceFolder;
 
-    public OneWireComponent() {
-        this.deviceFolder = Paths.get("/mnt/1wire/" + address);
+    @PostConstruct
+    public void init() {
+        System.out.println("OneWireComponent.init() address: " + address);
+        deviceFolder = Paths.get("/mnt/1wire/" + address);
     }
 
     public int readInt(String filename) throws IOException {
         byte[] bytes = Files.readAllBytes(deviceFolder.resolve(filename));
+        System.out.println("OneWireComponent.readInt() bytes.length: " + bytes.length);
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         return bb.getInt();
     }
@@ -94,11 +98,4 @@ public class OneWireComponent {
         return deviceFolder;
     }
 
-//    public static OneWireComponent deviceFromConfigType(String typeStr) {
-//        DeviceType type = DeviceType.valueOf(typeStr.toUpperCase());
-//        switch (type) {
-//            case MAGNET:
-//                return new Magnet();
-//        }
-//    }
 }

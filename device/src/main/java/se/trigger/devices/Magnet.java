@@ -57,6 +57,11 @@ public class Magnet extends AbstractDevice implements FileChangeListener {
     @Override
     public void onChange(Path changed) {
         try {
+            System.out.println("Magnet.onChange() connected: " + connected());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
             template.convertAndSend(getId(), "connected: " + connected());
         } catch (IOException e) {
             e.printStackTrace();
