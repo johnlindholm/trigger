@@ -5,4 +5,7 @@ package se.trigger.onewire.filesystem;
  */
 public class OWFSAliasFile extends OWFSAbstractFile {
 
+    public String readAlias() throws OWFSException {
+        return readString();
+    }
 }

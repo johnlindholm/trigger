@@ -5,10 +5,11 @@ import org.springframework.beans.factory.annotation.Value;
 import se.trigger.devices.event.OneWireFileChangeListener;
 import se.trigger.devices.event.OneWireFileChangeThread;
 import se.trigger.onewire.OneWireComponent;
+import se.trigger.onewire.filesystem.OWFSAbstractFile;
+import se.trigger.onewire.filesystem.OWFSException;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.nio.file.Path;
 
 /**
  * Created by john on 2017-04-14.
@@ -19,7 +20,7 @@ public class Motion extends AbstractDevice implements OneWireFileChangeListener 
     private String triggeredFilename;
 
     @Value("${true_value}")
-    private int triggeredTrueValue;
+    private String triggeredTrueValue;
 
     @Value("${file_inspect_interval}")
     private long fileInspectInterval;
@@ -27,13 +28,17 @@ public class Motion extends AbstractDevice implements OneWireFileChangeListener 
     @Autowired
     private OneWireComponent oneWireComponent;
 
+    private OWFSAbstractFile owfsFile;
+
     @PostConstruct
     public void init() {
-        taskExecutor.execute(new OneWireFileChangeThread(oneWireComponent, triggeredFilename, this, fileInspectInterval));
+        owfsFile = oneWireComponent.getOWFSFile(triggeredFilename);
+        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, fileInspectInterval));
     }
 
-    public boolean isTriggered() throws IOException {
-        return oneWireComponent.readInt(triggeredFilename) == triggeredTrueValue;
+    public boolean isTriggered() throws IOException, OWFSException {
+        String valueStr = owfsFile.readString();
+        return valueStr.equals(triggeredTrueValue);
     }
 
     @Override
@@ -57,10 +62,12 @@ public class Motion extends AbstractDevice implements OneWireFileChangeListener 
     }
 
     @Override
-    public void onChange(Path changed) {
+    public void onChange(OWFSAbstractFile owfsFile) {
         try {
             template.convertAndSend(getId(), "isTriggered: " + isTriggered());
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (OWFSException e) {
             e.printStackTrace();
         }
     }

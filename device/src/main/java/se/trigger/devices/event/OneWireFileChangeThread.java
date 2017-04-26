@@ -1,9 +1,8 @@
 package se.trigger.devices.event;
 
-import se.trigger.onewire.OneWireComponent;
+import se.trigger.onewire.filesystem.OWFSAbstractFile;
+import se.trigger.onewire.filesystem.OWFSException;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
@@ -13,70 +12,34 @@ import java.util.Formatter;
  */
 public class OneWireFileChangeThread implements Runnable {
 
-    private final OneWireComponent oneWireComponent;
-    private final String filename;
+    private final OWFSAbstractFile owfsFile;
     private final OneWireFileChangeListener listener;
-    private final Path folder;
     private String hash = null;
     private long sleepInMillis = -1;
 
-    public OneWireFileChangeThread(OneWireComponent oneWireComponent, String filename, OneWireFileChangeListener listener, long sleepInMillis) {
-        this.folder = oneWireComponent.getDeviceFolder();
-        this.filename = filename;
+    public OneWireFileChangeThread(OWFSAbstractFile owfsFile, OneWireFileChangeListener listener, long sleepInMillis) {
+        this.owfsFile = owfsFile;
         this.listener = listener;
-        this.oneWireComponent = oneWireComponent;
         this.sleepInMillis = sleepInMillis;
     }
-
-//    public Runnable runnable() {
-//        System.out.println("OneWireFileChangeThread.runnable");
-//        return () -> {
-//            System.out.println("OneWireFileChangeThread.runnable() folder: " + folder);
-//            System.out.println("OneWireFileChangeThread.runnable() filename: " + filename);
-//            try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
-//                folder.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
-//                while (true) {
-//                    final WatchKey wk = watchService.take();
-//                    for (WatchEvent<?> event : wk.pollEvents()) {
-//                        //we only register "ENTRY_MODIFY" so the context is always a Path.
-//                        final Path changed = (Path) event.context();
-//                        System.out.println("OneWireFileChangeThread.runnable() changed: " + changed);
-//                        if (changed.endsWith(filename)) {
-//                            listener.onChange(changed);
-//                            System.out.println("My file has changed");
-//                        }
-//                    }
-//                    // reset the key
-//                    boolean valid = wk.reset();
-//                    if (!valid) {
-//                        System.out.println("Key has been unregisterede");
-//                    }
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//
-//        };
-//    }
 
     @Override
     public void run() {
         while (true) {
             try {
-                String newHash = hash(oneWireComponent.readAllBytes(filename));
+                String newHash = hash(owfsFile.readBytes());
                 if (hash != null && !hash.equals(newHash)) {
                     //Hash changed, notify listener
                     System.out.println("OneWireFileChangeThread.run() file changed");
-                    Path changed = oneWireComponent.getDeviceFolder().resolve(filename);
-                    listener.onChange(changed);
+                    listener.onChange(owfsFile);
                 }
                 hash = newHash;
                 Thread.sleep(sleepInMillis);
-            } catch (IOException e) {
-                e.printStackTrace();
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (OWFSException e) {
                 e.printStackTrace();
             }
         }

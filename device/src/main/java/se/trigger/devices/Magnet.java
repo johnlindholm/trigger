@@ -5,10 +5,11 @@ import org.springframework.beans.factory.annotation.Value;
 import se.trigger.devices.event.OneWireFileChangeListener;
 import se.trigger.devices.event.OneWireFileChangeThread;
 import se.trigger.onewire.OneWireComponent;
+import se.trigger.onewire.filesystem.OWFSAbstractFile;
+import se.trigger.onewire.filesystem.OWFSException;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.nio.file.Path;
 
 /**
  * Created by john on 2017-04-12.
@@ -19,7 +20,7 @@ public class Magnet extends AbstractDevice implements OneWireFileChangeListener 
     private String connectedFilename;
 
     @Value("${true_value}")
-    private int connectedTrueValue;
+    private String connectedTrueValue;
 
     @Value("${file_inspect_interval}")
     private long fileInspectInterval;
@@ -27,17 +28,19 @@ public class Magnet extends AbstractDevice implements OneWireFileChangeListener 
     @Autowired
     private OneWireComponent oneWireComponent;
 
+    private OWFSAbstractFile owfsFile;
+
     @PostConstruct
     public void init() {
-        System.out.println("Magnet.init");
-        taskExecutor.execute(new OneWireFileChangeThread(oneWireComponent, connectedFilename, this, fileInspectInterval));
+        owfsFile = oneWireComponent.getOWFSFile(connectedFilename);
+        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, fileInspectInterval));
     }
 
-    public boolean connected() throws IOException {
+    public boolean connected() throws IOException, OWFSException {
         System.out.println("Magnet.connected() connectedTrueValue: " + connectedTrueValue);
-        int value = oneWireComponent.readInt(connectedFilename);
-        System.out.println("Magnet.connected() value: " + value);
-        return  value == connectedTrueValue;
+        String valueStr = owfsFile.readString();
+        System.out.println("Magnet.connected() value: " + valueStr);
+        return valueStr.trim().equals(connectedTrueValue);
     }
 
     @Override
@@ -61,15 +64,13 @@ public class Magnet extends AbstractDevice implements OneWireFileChangeListener 
     }
 
     @Override
-    public void onChange(Path changed) {
+    public void onChange(OWFSAbstractFile owfsFile) {
         try {
             System.out.println("Magnet.onChange() connected: " + connected());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             template.convertAndSend(getId(), "connected: " + connected());
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (OWFSException e) {
             e.printStackTrace();
         }
     }

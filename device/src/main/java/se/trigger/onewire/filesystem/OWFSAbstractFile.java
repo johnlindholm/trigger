@@ -1,6 +1,10 @@
 package se.trigger.onewire.filesystem;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by john on 2017-04-26.
@@ -64,16 +68,92 @@ public abstract class OWFSAbstractFile {
     //   f - fixed (like type name)
     //   t - time (changes every second)
 
-    Path path;
-    String type;
-    String index;
-    String elements;
-    String access;
-    String size;
-    String changeability;
+    private Path path;
+    private String type;
+    private String index;
+    private String elements;
+    private String access;
+    private String size;
+    private String changeability;
+
+    public Path getPath() {
+        return path;
+    }
+
+    public void setPath(Path path) {
+        this.path = path;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getIndex() {
+        return index;
+    }
+
+    public void setIndex(String index) {
+        this.index = index;
+    }
+
+    public String getElements() {
+        return elements;
+    }
+
+    public void setElements(String elements) {
+        this.elements = elements;
+    }
+
+    public String getAccess() {
+        return access;
+    }
+
+    public void setAccess(String access) {
+        this.access = access;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getChangeability() {
+        return changeability;
+    }
+
+    public void setChangeability(String changeability) {
+        this.changeability = changeability;
+    }
 
     @Override
     public String toString() {
         return "path: " + path + "\n\ttype: " + type + ", index: " + index + ", elements: " + elements + ", access: " + access + ", size: " + size + ", changeability: " + changeability;
+    }
+
+    public String readString() throws OWFSException {
+        try {
+            List<String> lines = Files.readAllLines(getPath());
+            if (lines != null && lines.size() == 1) {
+                return lines.get(0);
+            }
+            throw new OWFSException("Incorrect format lines: " + Arrays.toString(lines.toArray()));
+        } catch (IOException e) {
+            throw new OWFSException("Unable to read from file: " + e.getMessage(), e);
+        }
+    }
+
+    public byte[] readBytes() throws OWFSException {
+        try {
+            return Files.readAllBytes(getPath());
+        } catch (IOException e) {
+            throw new OWFSException("Unable to read from file: " + e.getMessage(), e);
+        }
     }
 }
