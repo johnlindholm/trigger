@@ -14,7 +14,7 @@
     <bytecodeTargetLevel target="1.8">
       <module name="device" target="1.8" />
       <module name="onewire" target="1.8" />
-      <module name="trigger" target="1.5" />
+      <module name="trigger" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

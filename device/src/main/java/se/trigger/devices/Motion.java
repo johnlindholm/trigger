@@ -1,11 +1,9 @@
 package se.trigger.devices;
 
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.task.TaskExecutor;
-import se.trigger.devices.discovery.FileChangeListener;
-import se.trigger.devices.discovery.FileChangeThread;
+import se.trigger.devices.event.OneWireFileChangeListener;
+import se.trigger.devices.event.OneWireFileChangeThread;
 import se.trigger.onewire.OneWireComponent;
 
 import javax.annotation.PostConstruct;
@@ -15,7 +13,7 @@ import java.nio.file.Path;
 /**
  * Created by john on 2017-04-14.
  */
-public class Motion extends AbstractDevice implements FileChangeListener {
+public class Motion extends AbstractDevice implements OneWireFileChangeListener {
 
     @Value("${value_filename}")
     private String triggeredFilename;
@@ -23,12 +21,15 @@ public class Motion extends AbstractDevice implements FileChangeListener {
     @Value("${true_value}")
     private int triggeredTrueValue;
 
+    @Value("${file_inspect_interval}")
+    private long fileInspectInterval;
+
     @Autowired
     private OneWireComponent oneWireComponent;
 
     @PostConstruct
     public void init() {
-        taskExecutor.execute(new FileChangeThread(oneWireComponent.getDeviceFolder(), triggeredFilename, this));
+        taskExecutor.execute(new OneWireFileChangeThread(oneWireComponent, triggeredFilename, this, fileInspectInterval));
     }
 
     public boolean isTriggered() throws IOException {

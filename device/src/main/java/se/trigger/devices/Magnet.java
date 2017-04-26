@@ -2,9 +2,8 @@ package se.trigger.devices;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
-import se.trigger.devices.discovery.FileChangeListener;
-import se.trigger.devices.discovery.FileChangeThread;
+import se.trigger.devices.event.OneWireFileChangeListener;
+import se.trigger.devices.event.OneWireFileChangeThread;
 import se.trigger.onewire.OneWireComponent;
 
 import javax.annotation.PostConstruct;
@@ -14,7 +13,7 @@ import java.nio.file.Path;
 /**
  * Created by john on 2017-04-12.
  */
-public class Magnet extends AbstractDevice implements FileChangeListener {
+public class Magnet extends AbstractDevice implements OneWireFileChangeListener {
 
     @Value("${value_filename}")
     private String connectedFilename;
@@ -22,16 +21,23 @@ public class Magnet extends AbstractDevice implements FileChangeListener {
     @Value("${true_value}")
     private int connectedTrueValue;
 
+    @Value("${file_inspect_interval}")
+    private long fileInspectInterval;
+
     @Autowired
     private OneWireComponent oneWireComponent;
 
     @PostConstruct
     public void init() {
-        taskExecutor.execute(new FileChangeThread(oneWireComponent.getDeviceFolder(), connectedFilename, this));
+        System.out.println("Magnet.init");
+        taskExecutor.execute(new OneWireFileChangeThread(oneWireComponent, connectedFilename, this, fileInspectInterval));
     }
 
     public boolean connected() throws IOException {
-        return oneWireComponent.readInt(connectedFilename) == connectedTrueValue;
+        System.out.println("Magnet.connected() connectedTrueValue: " + connectedTrueValue);
+        int value = oneWireComponent.readInt(connectedFilename);
+        System.out.println("Magnet.connected() value: " + value);
+        return  value == connectedTrueValue;
     }
 
     @Override

@@ -28,7 +28,6 @@ public class HeartbeatThread extends Thread {
         while (true) {
             try {
                 template.convertAndSend("heartbeat", device.getId());
-                System.out.println("Sending heartbeat device: " + device);
                 Thread.sleep(heartbeatIntervalMillis);
             } catch (AmqpException e) {
                 e.printStackTrace();

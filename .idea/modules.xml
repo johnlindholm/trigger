@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/device/device.iml" filepath="$PROJECT_DIR$/device/device.iml" />
-      <module fileurl="file://$PROJECT_DIR$/device/mq.iml" filepath="$PROJECT_DIR$/device/mq.iml" />
       <module fileurl="file://$PROJECT_DIR$/trigger.iml" filepath="$PROJECT_DIR$/trigger.iml" />
     </modules>
   </component>

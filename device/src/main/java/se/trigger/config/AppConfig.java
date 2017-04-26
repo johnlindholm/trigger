@@ -49,7 +49,7 @@ public class AppConfig {
     @Bean
     ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setHost("localhost");
+        connectionFactory.setHost("192.168.1.25");
         connectionFactory.setUsername("john");
         connectionFactory.setPassword("Johnli81");
         return connectionFactory;
