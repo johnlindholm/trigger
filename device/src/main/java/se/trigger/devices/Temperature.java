@@ -17,7 +17,7 @@ public class Temperature extends AbstractDevice {
 
     @Override
     public String getId() {
-        return getName() + " " + oneWireComponent.getAddress();
+        return oneWireComponent.getAddress().replaceAll("[.]", "_");
     }
 
     @Override

@@ -5,6 +5,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import se.trigger.config.AppConfig;
 import se.trigger.devices.AbstractDevice;
 
 /**
@@ -19,16 +20,17 @@ public class HeartbeatThread extends Thread {
     @Autowired
     private AmqpTemplate template;
 
-    @Value("${heartbeat_interval_millis}")
-    private long heartbeatIntervalMillis;
+    @Value("${mq.heartbeat_interval_millis}")
+    private long mqHeartbeatIntervalMillis;
 
     @Override
     public void run() {
         System.out.println("HeartbeatThread.start()");
         while (true) {
             try {
-                template.convertAndSend("heartbeat", device.getId());
-                Thread.sleep(heartbeatIntervalMillis);
+                System.out.println("HeartbeatThread.run() sending heartbeat: " + device.getId());
+                template.convertAndSend(AppConfig.EXCHANGE_NAME, AppConfig.ROUTING_KEY_HEARTBEAT, device.getId());
+                Thread.sleep(mqHeartbeatIntervalMillis);
             } catch (AmqpException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {

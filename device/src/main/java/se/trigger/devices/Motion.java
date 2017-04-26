@@ -16,14 +16,14 @@ import java.io.IOException;
  */
 public class Motion extends AbstractDevice implements OneWireFileChangeListener {
 
-    @Value("${value_filename}")
-    private String triggeredFilename;
+    @Value("${1wire.value_filename}")
+    private String oneWireTriggeredFilename;
 
-    @Value("${true_value}")
-    private String triggeredTrueValue;
+    @Value("${1wire.true_value}")
+    private String oneWireTriggeredTrueValue;
 
-    @Value("${file_inspect_interval}")
-    private long fileInspectInterval;
+    @Value("${1wire.file_inspect_interval}")
+    private long oneWireFileInspectInterval;
 
     @Autowired
     private OneWireComponent oneWireComponent;
@@ -32,18 +32,18 @@ public class Motion extends AbstractDevice implements OneWireFileChangeListener 
 
     @PostConstruct
     public void init() {
-        owfsFile = oneWireComponent.getOWFSFile(triggeredFilename);
-        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, fileInspectInterval));
+        owfsFile = oneWireComponent.getOWFSFile(oneWireTriggeredFilename);
+        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, oneWireFileInspectInterval));
     }
 
     public boolean isTriggered() throws IOException, OWFSException {
         String valueStr = owfsFile.readString();
-        return valueStr.equals(triggeredTrueValue);
+        return valueStr.equals(oneWireTriggeredTrueValue);
     }
 
     @Override
     public String getId() {
-        return getName() + " " + oneWireComponent.getAddress();
+        return oneWireComponent.getAddress().replaceAll("[.]", "_");
     }
 
     @Override

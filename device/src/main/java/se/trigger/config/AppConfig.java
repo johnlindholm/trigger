@@ -1,5 +1,8 @@
 package se.trigger.config;
 
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -25,33 +28,53 @@ import se.trigger.devices.Temperature;
 public class AppConfig {
 
     public final static String EXCHANGE_NAME = "trigger.devices";
+    public final static String ROUTING_KEY_HEARTBEAT = "heartbeat";
+    public final static String ROUTING_KEY_DEVICE_MESSAGE_PREFIX = "device.";
+    public final static String ROUTING_KEY_DEVICE_MESSAGE_PATTERN = ROUTING_KEY_DEVICE_MESSAGE_PREFIX + "*";
 
-    @Value("${type}")
-    private String deviceType;
+    @Value("${mq.hostname}")
+    private String mqHostname;
 
-//    final static String queueName = "spring-boot";
-//
-//    @Bean
-//    Queue queue() {
-//        device = Queue(queueName, false);
-//    }
+    @Value("${mq.username}")
+    private String mqUsername;
+
+    @Value("${mq.password}")
+    private String mqPassword;
+
+    @Value("${1wire.type}")
+    private String oneWireDeviceType;
 
     @Bean
-    TopicExchange exchange() {
+    Queue heartbeatQueue() {
+        return new Queue("heartbeatQueue");
+    }
+
+    @Bean
+    Queue deviceMessageQueue() {
+        return new Queue("deviceMessageQueue");
+    }
+
+    @Bean
+    TopicExchange deviceExchange() {
         return new TopicExchange(EXCHANGE_NAME);
     }
 
-//    @Bean
-//    Binding binding(Queue queue, TopicExchange exchange) {
-//        return BindingBuilder.bind(queue).to(exchange).with(queueName);
-//    }
+    @Bean
+    Binding heartbeatQueueBinding() {
+        return BindingBuilder.bind(heartbeatQueue()).to(deviceExchange()).with(ROUTING_KEY_HEARTBEAT);
+    }
+
+    @Bean
+    Binding deviceMessageQueueBinding() {
+        return BindingBuilder.bind(deviceMessageQueue()).to(deviceExchange()).with(ROUTING_KEY_DEVICE_MESSAGE_PATTERN);
+    }
 
     @Bean
     ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setHost("192.168.1.25");
-        connectionFactory.setUsername("john");
-        connectionFactory.setPassword("Johnli81");
+        connectionFactory.setHost(mqHostname);
+        connectionFactory.setUsername(mqUsername);
+        connectionFactory.setPassword(mqPassword);
         return connectionFactory;
     }
 
@@ -66,13 +89,13 @@ public class AppConfig {
 
     @Bean
     public TaskExecutor taskExecutor() {
-        return new SimpleAsyncTaskExecutor(); // Or use another one of your liking
+        return new SimpleAsyncTaskExecutor();
     }
 
     @Bean
     public AbstractDevice device() {
         AbstractDevice device = null;
-        DeviceType type = DeviceType.valueOf(deviceType.toUpperCase());
+        DeviceType type = DeviceType.valueOf(oneWireDeviceType.toUpperCase());
         switch (type) {
             case MAGNET:
                 device = new Magnet();

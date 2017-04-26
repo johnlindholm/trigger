@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -15,36 +16,42 @@ import java.util.Map;
 public class OWFSUtils {
 
     public static Map<Path, OWFSAbstractFile> parseOWFS(Path deviceFolder, String family) {
-        System.out.println("OWFSUtils.parseOWFS() deviceFolder: " + deviceFolder + ", family: " + family);
         return parseDirectoryStructure(deviceFolder, Paths.get("/mnt/1wire/structure/" + family), family);
     }
 
     private static Map<Path, OWFSAbstractFile> parseDirectoryStructure(Path deviceFolder, Path deviceStructureFolder, String family) {
         Map<Path, OWFSAbstractFile> pathToOWFSFileMap = new HashMap<>();
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(deviceStructureFolder)) {
-            for (Path path : directoryStream) {
-                if (Files.isDirectory(path)) {
-                    Map<Path, OWFSAbstractFile> subPathToOWFSFileMap = parseDirectoryStructure(deviceFolder, path, family);
-                    pathToOWFSFileMap.putAll(subPathToOWFSFileMap);
-                } else {
-                    OWFSAbstractFile owfsFile = parseFileStructure(Files.readAllLines(path).get(0));
-                    pathToOWFSFileMap.put(structurePathToDevicePath(deviceFolder, path, family), owfsFile);
-                }
-            }
+        DirectoryStream<Path> directoryStream;
+        try {
+            directoryStream = Files.newDirectoryStream(deviceStructureFolder);
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
+        }
+        Iterator<Path> itr = directoryStream.iterator();
+        while (itr.hasNext()) {
+            try {
+                Path structurePath = itr.next();
+                if (Files.isDirectory(structurePath)) {
+                    Map<Path, OWFSAbstractFile> subPathToOWFSFileMap = parseDirectoryStructure(deviceFolder, structurePath, family);
+                    pathToOWFSFileMap.putAll(subPathToOWFSFileMap);
+                } else {
+                    OWFSAbstractFile owfsFile = parseFileStructure(structurePath, structurePathToDevicePath(deviceFolder, structurePath, family));
+                    pathToOWFSFileMap.put(structurePathToDevicePath(deviceFolder, structurePath, family), owfsFile);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return pathToOWFSFileMap;
     }
 
     private static Path structurePathToDevicePath(Path deviceFolder, Path structureFilePath, String family) {
-        System.out.println("OneWireComponent.structurePathToDevicePath() structureFilePath: " + structureFilePath);
-        System.out.println("OneWireComponent.structurePathToDevicePath() deviceFolder.getFileName().toString(): " + deviceFolder.getFileName().toString());
         String devicePathStr = structureFilePath.toString().replaceAll("/structure/" + family, "/" + deviceFolder.getFileName().toString());
         return FileSystems.getDefault().getPath(devicePathStr);
     }
 
-    private static OWFSAbstractFile parseFileStructure(String s) {
+    private static OWFSAbstractFile parseFileStructure(Path structurePath, Path deviceFilePath) throws IOException {
         //   D - directory (or subdirectory)
         //   i- integer, read as string
         //   u - unsigned integer, read as string
@@ -57,7 +64,10 @@ public class OWFSUtils {
         //   t - temperature
         //   g -temperature gap (delta)
         //   p - pressure
-        String[] ss = s.split(",");
+
+        String line = Files.readAllLines(structurePath).get(0);
+
+        String[] ss = line.split(",");
         String type = ss[0];
         String index = ss[1];
         String elements = ss[2];
@@ -91,6 +101,7 @@ public class OWFSUtils {
             owfsAbstractFile = new OWFSPressureFile();
         }
 
+        owfsAbstractFile.setPath(deviceFilePath);
         owfsAbstractFile.setType(type);
         owfsAbstractFile.setIndex(index);
         owfsAbstractFile.setElements(elements);

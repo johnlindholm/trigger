@@ -16,14 +16,14 @@ import java.io.IOException;
  */
 public class Magnet extends AbstractDevice implements OneWireFileChangeListener {
 
-    @Value("${value_filename}")
-    private String connectedFilename;
+    @Value("${1wire.value_filename}")
+    private String oneWireConnectedFilename;
 
-    @Value("${true_value}")
-    private String connectedTrueValue;
+    @Value("${1wire.true_value}")
+    private String oneWireConnectedTrueValue;
 
-    @Value("${file_inspect_interval}")
-    private long fileInspectInterval;
+    @Value("${1wire.file_inspect_interval}")
+    private long oneWireFileInspectInterval;
 
     @Autowired
     private OneWireComponent oneWireComponent;
@@ -32,20 +32,18 @@ public class Magnet extends AbstractDevice implements OneWireFileChangeListener 
 
     @PostConstruct
     public void init() {
-        owfsFile = oneWireComponent.getOWFSFile(connectedFilename);
-        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, fileInspectInterval));
+        owfsFile = oneWireComponent.getOWFSFile(oneWireConnectedFilename);
+        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, oneWireFileInspectInterval));
     }
 
     public boolean connected() throws IOException, OWFSException {
-        System.out.println("Magnet.connected() connectedTrueValue: " + connectedTrueValue);
         String valueStr = owfsFile.readString();
-        System.out.println("Magnet.connected() value: " + valueStr);
-        return valueStr.trim().equals(connectedTrueValue);
+        return valueStr.trim().equals(oneWireConnectedTrueValue);
     }
 
     @Override
     public String getId() {
-        return getName() + " " + oneWireComponent.getAddress();
+        return oneWireComponent.getAddress().replaceAll("[.]", "_");
     }
 
     @Override
@@ -66,8 +64,9 @@ public class Magnet extends AbstractDevice implements OneWireFileChangeListener 
     @Override
     public void onChange(OWFSAbstractFile owfsFile) {
         try {
-            System.out.println("Magnet.onChange() connected: " + connected());
-            template.convertAndSend(getId(), "connected: " + connected());
+            boolean connected = connected();
+            System.out.println("Magnet.onChange() connected: " + connected);
+            sendMessage("connected: " + connected);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (OWFSException e) {

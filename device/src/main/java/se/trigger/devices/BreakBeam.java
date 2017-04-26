@@ -16,14 +16,14 @@ import java.io.IOException;
  */
 public class BreakBeam extends AbstractDevice implements OneWireFileChangeListener {
 
-    @Value("${value_filename}")
-    private String connectedFilename;
+    @Value("${1wire.value_filename}")
+    private String oneWireConnectedFilename;
 
-    @Value("${true_value}")
-    private String connectedTrueValue;
+    @Value("${1wire.true_value}")
+    private String oneWireConnectedTrueValue;
 
-    @Value("${file_inspect_interval}")
-    private long fileInspectInterval;
+    @Value("${1wire.file_inspect_interval}")
+    private long oneWireFileInspectInterval;
 
     @Autowired
     private OneWireComponent oneWireComponent;
@@ -32,18 +32,18 @@ public class BreakBeam extends AbstractDevice implements OneWireFileChangeListen
 
     @PostConstruct
     public void init() {
-        owfsFile = oneWireComponent.getOWFSFile(connectedFilename);
-        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, fileInspectInterval));
+        owfsFile = oneWireComponent.getOWFSFile(oneWireConnectedFilename);
+        taskExecutor.execute(new OneWireFileChangeThread(owfsFile, this, oneWireFileInspectInterval));
     }
 
     public boolean connected() throws IOException, OWFSException {
         String valueStr = owfsFile.readString();
-        return valueStr.equals(connectedTrueValue);
+        return valueStr.equals(oneWireConnectedTrueValue);
     }
 
     @Override
     public String getId() {
-        return getName() + " " + oneWireComponent.getAddress();
+        return oneWireComponent.getAddress().replaceAll("[.]", "_");
     }
 
     @Override

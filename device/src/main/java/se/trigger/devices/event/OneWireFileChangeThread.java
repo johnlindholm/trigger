@@ -27,10 +27,10 @@ public class OneWireFileChangeThread implements Runnable {
     public void run() {
         while (true) {
             try {
-                String newHash = hash(owfsFile.readBytes());
+                byte[] data = owfsFile.readBytes();
+                String newHash = hash(data);
                 if (hash != null && !hash.equals(newHash)) {
                     //Hash changed, notify listener
-                    System.out.println("OneWireFileChangeThread.run() file changed");
                     listener.onChange(owfsFile);
                 }
                 hash = newHash;
@@ -45,7 +45,7 @@ public class OneWireFileChangeThread implements Runnable {
         }
     }
 
-    public static String hash(byte[] bytes) throws NoSuchAlgorithmException{
+    private static String hash(byte[] bytes) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         return byteArray2Hex(md.digest(bytes));
     }

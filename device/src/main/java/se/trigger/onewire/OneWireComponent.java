@@ -17,8 +17,8 @@ import java.util.Map;
 public class OneWireComponent {
 
 
-    @Value("${address}")
-    private String address;
+    @Value("${1wire.address}")
+    private String oneWireAddress;
 
     private Path deviceFolder;
 
@@ -26,9 +26,9 @@ public class OneWireComponent {
 
     @PostConstruct
     public void init() {
-        System.out.println("OneWireComponent.init() address: " + address);
-        deviceFolder = Paths.get("/mnt/1wire/" + address);
-        pathToOWFSFileMap = OWFSUtils.parseOWFS(deviceFolder, getFamily(address));
+        System.out.println("OneWireComponent.init() oneWireAddress: " + oneWireAddress);
+        deviceFolder = Paths.get("/mnt/1wire/" + oneWireAddress);
+        pathToOWFSFileMap = OWFSUtils.parseOWFS(deviceFolder, getFamily(oneWireAddress));
     }
 
     public OWFSAbstractFile getOWFSFile(Path path) {
@@ -40,39 +40,11 @@ public class OneWireComponent {
     }
 
     private static String getFamily(String address) {
-        return address.split(".")[0];
+        return address.split("[.]")[0];
     }
 
-//    public int readInt(String filename) throws IOException {
-//        byte[] bytes = readAllBytes(filename);
-//        for (int i = 0; i < bytes.length; i++) {
-//            System.out.println("OneWireComponent.readInt() bytes["+i+"]: " + bytes[0]);
-//        }
-//        if (bytes.length < 4) {
-//            byte[] tmp = new byte[4];
-//            System.arraycopy(bytes, 0, tmp, tmp.length - bytes.length, bytes.length);
-//            bytes = tmp;
-//            for (int i = 0; i < bytes.length; i++) {
-//                System.out.println("OneWireComponent.readInt() bytes["+i+"]: " + bytes[0]);
-//            }
-//        } else if (bytes.length > 4) {
-//            byte[] tmp = new byte[4];
-//            System.arraycopy(bytes, bytes.length - 4, tmp,0, 4);
-//            bytes = tmp;
-//            for (int i = 0; i < bytes.length; i++) {
-//                System.out.println("OneWireComponent.readInt() bytes["+i+"]: " + bytes[0]);
-//            }
-//        }
-//        ByteBuffer bb = ByteBuffer.wrap(bytes);
-//        return bb.getInt();
-//    }
-//
-//    public byte[] readAllBytes(String filename) throws IOException {
-//        return Files.readAllBytes(deviceFolder.resolve(filename));
-//    }
-
     public String getAddress() {
-        return address;
+        return oneWireAddress;
     }
 
     public Path getDeviceFolder() {
