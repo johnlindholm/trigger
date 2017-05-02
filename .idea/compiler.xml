@@ -8,13 +8,15 @@
         <outputRelativeToContentRoot value="true" />
         <module name="device" />
         <module name="mq" />
-        <module name="trigger" />
+        <module name="triggerweb" />
+        <module name="web" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
       <module name="device" target="1.8" />
-      <module name="onewire" target="1.8" />
       <module name="trigger" target="1.8" />
+      <module name="triggerweb" target="1.8" />
+      <module name="web" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
